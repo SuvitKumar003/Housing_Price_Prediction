@@ -130,6 +130,30 @@
                 <option value="elevator_1">Elevator (Yes)</option>
               </select>
             </div>
+            <div class="row">
+              <div class="col-md-12">
+                <br>
+                <input type="file" name="file" id="file" class="form-control" />
+                
+                
+              </div>
+            </div>
+            <script>
+              const file = document.getElementById("file");
+              file.addEventListener("change", function () {
+                const file = this.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.addEventListener("load", function () {
+                    console.log(this);
+                    document.getElementById("img").setAttribute("src", this.result);
+                  });
+                  reader.readAsDataURL(file);
+                }
+              });
+            </script>
+
+            
           </div>
           <br>
           <button id="btn" type="submit" class="btn btn-primary btn-block">
@@ -143,35 +167,14 @@
               <h3 id="price">Price Is ${{results}}K</h3>
               {% else %}
               {% endif %}
-            </div>
+            </div>            
           </div>
           <!-- Author Details -->
           <br />
+         
           <div>
-
-            <h5 id="auth">Authors Details</h5>
-            <div class="row">
-              <div class="col-md-6">
-                <p>Bibek Rawat <br>(18BCS6728) (Team Lead)</p>
-              </div>
-              <div class="col-md-6">
-                <p>Shubham Sah <br>(18BCS6537)</p>
-              </div>
-              <div class="col-md-6">
-                <p>Shreyansh Raut <br>(18BCS1703)</p>
-              </div>
-              <div class="col-md-6">
-                <p>Md. Tauhid Alam <br>(18BCS6588)</p>
-              </div>
-            </div>
-            <p>Ankita Sharma (Mentor)</p>
-
           </div>
           <br><br>
-          <div>
-            <a href="https://github.com/bibek376/Housing_Price_Prediction" id="link">View Project on GitHub</a>
-          </div>
-          <br><br><br><br>
         </div>
     </form>
     <br><br>
