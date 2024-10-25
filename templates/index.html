@@ -18,13 +18,57 @@
         background-size: cover;
         background-repeat: no-repeat;
       }
+      .moving-images {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Image styling */
+      .centered-image {
+        width: 30%;
+        height: auto;
+        object-fit: cover;
+        border-radius: 10px;
+        margin: 0 10px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      /* Hover effect */
+      .centered-image:hover {
+        transform: scale(1.1); /* Increase scale on hover */
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3); /* Add shadow effect */
+      }
     </style>
   </head>
   <body>
     <header class="text-center py-3">
-      <h2>Housing Price Prediction & Description Generator</h2>
+      <h2
+        class="justify-content-center"
+        style="text-align: center; font-weight: bold; margin-top: 20px"
+      >
+        Housing Price Prediction & Description Generator
+      </h2>
     </header>
-
+    <div
+      class="col d-flex justify-content-center align-items-center moving-images"
+    >
+      <img
+        src="../static/House-Wallpapers.jpg"
+        alt="House-Wallpapers"
+        class="img-fluid centered-image zoom-image"
+      />
+      <img
+        src="../static/house2.jpg"
+        alt="House-Wallpapers"
+        class="img-fluid centered-image zoom-image"
+      />
+      <img
+        src="../static/house3.jpg"
+        alt="House-Wallpapers"
+        class="img-fluid centered-image zoom-image"
+      />
+    </div>
     <div class="container">
       <form action="/" method="POST" enctype="multipart/form-data">
         <!-- House Details -->
