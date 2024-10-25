@@ -1,0 +1,7 @@
+house_env/
+Procfile/
+Picutres_For_README/
+Dataset/
+.ipynb_checkpoints/
+__pycache__/
+Model/
