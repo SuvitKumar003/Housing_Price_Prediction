@@ -1,146 +1,100 @@
-'''
-@Author ---> Bibek Rawat
-'''
-
-from flask import Flask,request,render_template
+from flask import Flask, request, render_template
 import pickle
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+import google.generativeai as genai
+from langchain_core.messages import HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
+# Load models and API keys
+model = pickle.load(open('Model/Housing_Model', 'rb'))
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-app=Flask(__name__)
+def generate_caption(image_path, message_text):
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_API_KEY)
+    message = HumanMessage(
+        content=[
+            {"type": "text", "text": message_text},
+            {"type": "image_url", "image_url": image_path}
+        ]
+    )
+    result = llm.invoke([message])
+    return result.content
 
-#loading the model
-model=pickle.load(open('Model/Housing_Model','rb'))
-
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('index.html')
+    price_result = None
+    caption = None
 
+    if request.method == 'POST':
+        # Extract and process form data
+        try:
+            # House details for prediction
+            query_tradetime = float(request.form['tradetime'])
+            query_followers = int(request.form['followers'])
+            query_square = float(request.form['square'])
+            query_livingroom = int(request.form['livingroom'])
+            query_drawingroom = int(request.form['drawingroom'])
+            query_kitchen = int(request.form['kitchen'])
+            query_bathroom = int(request.form['bathroom'])
+            query_constructiontime = float(request.form['constructiontime'])
+            query_communityaverage = float(request.form['communityaverage'])
+            query_renovationcondition = request.form['renovationcondition']
+            query_buildingstructure = request.form['buildingstructure']
+            query_elevator = request.form['elevator']
 
+            # Categorical variable handling
+            renovationCondition_2, renovationCondition_3, renovationCondition_4 = 0, 0, 0
+            if query_renovationcondition == "renovationCondition_2":
+                renovationCondition_2 = 1
+            elif query_renovationcondition == "renovationCondition_3":
+                renovationCondition_3 = 1
+            elif query_renovationcondition == "renovationCondition_4":
+                renovationCondition_4 = 1
 
-@app.route('/',methods=['POST'])
-def predict():
-    try:
-         '''
-        Required input for machine learning model
-        1. tradeTime
-        2. followers
-        3. square
-        4. livingRoom
-        5. drawingRoom
-        6. kitchen
-        7. bathRoom
-        8. constructionTime
-        9. communityAverage
-        10. renovationCondition
-        11. buildingStructure
-        12. elevator
-        '''
-         #syntax-->  var_name=request.form['<name which in present in html form(index.html)>']
-         query_tradetime=request.form['tradetime']
-         query_followers=request.form['followers']
-         query_square=request.form['square']
-         query_livingroom=request.form['livingroom']
-         query_drawingroom=request.form['drawingroom']
-         query_kitchen=request.form['kitchen']
-         query_bathroom=request.form['bathroom']
-         query_constructiontime=request.form['constructiontime']
-         query_communityaverage=request.form['communityaverage']
-         query_renovationcondition=request.form['renovationcondition'] #Categorical Data
-         query_buildingstructure=request.form['buildingstructure'] #Categorical Data
-         query_elevator=request.form['elevator'] #Categorical Data
+            buildingStructure_2, buildingStructure_3, buildingStructure_4, buildingStructure_5, buildingStructure_6 = 0, 0, 0, 0, 0
+            if query_buildingstructure == "buildingStructure_2":
+                buildingStructure_2 = 1
+            elif query_buildingstructure == "buildingStructure_3":
+                buildingStructure_3 = 1
+            elif query_buildingstructure == "buildingStructure_4":
+                buildingStructure_4 = 1
+            elif query_buildingstructure == "buildingStructure_5":
+                buildingStructure_5 = 1
+            elif query_buildingstructure == "buildingStructure_6":
+                buildingStructure_6 = 1
 
-         if query_tradetime<query_constructiontime:
-             return render_template('index.html')
+            elevator_1 = 1 if query_elevator == "elevator_1" else 0
 
+            model_data = [[
+                query_tradetime, query_followers, query_square, query_livingroom,
+                query_drawingroom, query_kitchen, query_bathroom, query_constructiontime,
+                query_communityaverage, renovationCondition_2, renovationCondition_3, renovationCondition_4,
+                buildingStructure_2, buildingStructure_3, buildingStructure_4, buildingStructure_5,
+                buildingStructure_6, elevator_1
+            ]]
 
-         #For renovation condition
-         if query_renovationcondition=="renovationCondition_1":
-            renovationCondition_2=0
-            renovationCondition_3=0
-            renovationCondition_4=0
-         elif query_renovationcondition=="renovationCondition_2":
-            renovationCondition_2=1
-            renovationCondition_3=0
-            renovationCondition_4=0
-         elif query_renovationcondition=="renovationCondition_3":
-            renovationCondition_2=0
-            renovationCondition_3=1
-            renovationCondition_4=0
-         else:
-            renovationCondition_2=0
-            renovationCondition_3=0
-            renovationCondition_4=1
+            # Predict house price
+            result = model.predict(model_data)
+            price_result = "{:.3f}".format(float(result))
 
+            # Image caption generation
+            if 'image' in request.files:
+                image = request.files['image']
+                message_text = request.form.get('message', 'House image')
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+                image.save(image_path)
+                caption = generate_caption(image_path, message_text)
 
-        # For building structure
-         if query_buildingstructure=="buildingStructure_1":
-            buildingStructure_2=0
-            buildingStructure_3=0
-            buildingStructure_4=0
-            buildingStructure_5=0
-            buildingStructure_6=0
-         elif query_buildingstructure=="buildingStructure_2":
-            buildingStructure_2=1
-            buildingStructure_3=0
-            buildingStructure_4=0
-            buildingStructure_5=0
-            buildingStructure_6=0
-         elif query_buildingstructure=="buildingStructure_3":
-            buildingStructure_2=0
-            buildingStructure_3=1
-            buildingStructure_4=0
-            buildingStructure_5=0
-            buildingStructure_6=0
-         elif query_buildingstructure=="buildingStructure_4":
-            buildingStructure_2=0
-            buildingStructure_3=0
-            buildingStructure_4=1
-            buildingStructure_5=0
-            buildingStructure_6=0
-         elif query_buildingstructure=="buildingStructure_5":
-            buildingStructure_2=0
-            buildingStructure_3=0
-            buildingStructure_4=0
-            buildingStructure_5=1
-            buildingStructure_6=0
-         else:
-            buildingStructure_2=0
-            buildingStructure_3=0
-            buildingStructure_4=0
-            buildingStructure_5=0
-            buildingStructure_6=1
-        
-        # For elevator
-         if query_elevator=="elevator_0":
-            elevator_1=0
-         else:
-            elevator_1=1
+        except ValueError:
+            price_result = "Invalid input provided for housing prediction."
 
-         model_data=[[query_tradetime,query_followers,query_square,query_livingroom,
-                    query_drawingroom,query_kitchen,query_bathroom,query_constructiontime,
-                    query_communityaverage,renovationCondition_2,renovationCondition_3,renovationCondition_4,
-                    buildingStructure_2,buildingStructure_3,buildingStructure_4,buildingStructure_5,
-                    buildingStructure_6,elevator_1]]
-        
-         result=model.predict(model_data)
-         x=float(result)
-         y="{:.3f}".format(x)
+    return render_template('index.html', price_result=price_result, caption=caption)
 
-         return render_template('index.html',results=y)
-
-
-    except ValueError:
-        return render_template('index.html')
-   
-
-if __name__=="__main__":
+if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
