@@ -32,9 +32,9 @@ def home():
     caption = None
 
     if request.method == 'POST':
-        # Extract and process form data
+        # Handle image and form details
         try:
-            # House details for prediction
+            # House details
             query_tradetime = float(request.form['tradetime'])
             query_followers = int(request.form['followers'])
             query_square = float(request.form['square'])
@@ -47,8 +47,10 @@ def home():
             query_renovationcondition = request.form['renovationcondition']
             query_buildingstructure = request.form['buildingstructure']
             query_elevator = request.form['elevator']
+            image = request.files['image']
+            message_text = request.form['crisp_description']
 
-            # Categorical variable handling
+            # Handle categorical variables
             renovationCondition_2, renovationCondition_3, renovationCondition_4 = 0, 0, 0
             if query_renovationcondition == "renovationCondition_2":
                 renovationCondition_2 = 1
@@ -71,6 +73,7 @@ def home():
 
             elevator_1 = 1 if query_elevator == "elevator_1" else 0
 
+            # Predict price
             model_data = [[
                 query_tradetime, query_followers, query_square, query_livingroom,
                 query_drawingroom, query_kitchen, query_bathroom, query_constructiontime,
@@ -78,19 +81,14 @@ def home():
                 buildingStructure_2, buildingStructure_3, buildingStructure_4, buildingStructure_5,
                 buildingStructure_6, elevator_1
             ]]
-
-            # Predict house price
             result = model.predict(model_data)
             price_result = "{:.3f}".format(float(result))
 
-            # Image caption generation
-            if 'image' in request.files:
-                image = request.files['image']
-                message_text = request.form.get('message', 'House image')
-                image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
-                image.save(image_path)
-                caption = generate_caption(image_path, message_text)
-
+            # Generate caption
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+            image.save(image_path)
+            caption = generate_caption(image_path, message_text)
+        
         except ValueError:
             price_result = "Invalid input provided for housing prediction."
 
